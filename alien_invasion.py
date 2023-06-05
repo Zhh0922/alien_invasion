@@ -6,7 +6,8 @@ from ship import Ship
 from bullet import Bullet
 from alien import Alien
 from game_stats import GameStats
-
+from button import Button
+from scoreboard import Scoreboard
 
 class AlienInvasion:
     """管理游戏资源和行为的类"""
@@ -23,11 +24,14 @@ class AlienInvasion:
         pygame.display.set_caption("Alien Invasion")
         # self.bg_color = (230, 230, 230)
         self.stats = GameStats(self)    # 创建一个用于存储游戏统计信息的实例
+        self.sb = Scoreboard(self)
         self.ship = Ship(self)  # 此处的self指向的是当前AlienInvasion实例
         self.bullets = pygame.sprite.Group()
         self.aliens = pygame.sprite.Group()
 
         self._create_fleet()
+
+        self.play_button = Button(self, "Play")
 
     def run_game(self):
         """开始游戏的主循环"""
@@ -49,6 +53,9 @@ class AlienInvasion:
                 self._check_keydown_event(event)
             elif event.type == pygame.KEYUP:
                 self._check_keyup_event(event)
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                mouse_pos = pygame.mouse.get_pos()
+                self._check_play_button(mouse_pos)  # pygame.mouse.get_pos()返回一个元组，包含玩家单机时的x，y坐标
 
     def _check_keydown_event(self, event):
         if event.key == pygame.K_RIGHT:
@@ -91,6 +98,7 @@ class AlienInvasion:
             # 删除现有的子弹并创建一群外星人
             self.bullets.empty()
             self._create_fleet()
+            self.settings.increase_speed()
 
     def _create_fleet(self):
         # 创建一个外星人，并计算一行可以容纳多少个外星人
@@ -156,6 +164,7 @@ class AlienInvasion:
             sleep(1)
         else:
             self.stats.game_active = False
+            pygame.mouse.set_visible(True)
 
     def _check_aliens_bottom(self):
         """检查是否有外星人到达屏幕底端"""
@@ -173,8 +182,31 @@ class AlienInvasion:
         for bullet in self.bullets.sprites():
             bullet.draw_bullet()
         self.aliens.draw(self.screen)
+        # 显示得分
+        self.sb.show_score()
+        # 如果游戏处于非活动状态，就绘制按钮
+        if not self.stats.game_active:
+            self.play_button.draw_button()
         """让最近绘制的屏幕可见"""
         pygame.display.flip()  # 每次循环时都会绘制一个屏幕，并擦去旧屏幕
+
+    def _check_play_button(self, mouse_pos):
+        button_clicked =self.play_button.rect.collidepoint(mouse_pos)
+        if button_clicked and not self.stats.game_active:
+            # 重置游戏速度
+            self.settings.initialize_dynamic_settings()
+            # 重置游戏统计信息
+            self.stats.reset_stats()
+            self.stats.game_active = True
+            # 清空外星人和子弹
+            self.aliens.empty()
+            self.bullets.empty()
+
+            # 创建一群新的外星人并让飞船剧中
+            self._create_fleet()
+            self.ship.center_ship()
+
+            pygame.mouse.set_visible(False)     # 隐藏鼠标光标
 
 
 if __name__ == '__main__':
