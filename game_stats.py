@@ -8,6 +8,8 @@ class GameStats:
         self.settings = ai_game.settings
         self.reset_stats()
         self.game_active = True
+        self.high_score = 0     # 任何情况下都不应该重置最高得分
+        self.level = 1
 
     def reset_stats(self):
         self.ships_left = self.settings.ship_limit

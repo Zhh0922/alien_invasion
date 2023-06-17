@@ -94,11 +94,20 @@ class AlienInvasion:
         collisions = pygame.sprite.groupcollide(
             self.bullets, self.aliens, True, True
         )
+        if collisions:
+            for aliens in collisions.values():
+                self.stats.score += self.settings.alien_points * len(aliens)
+                self.sb.prep_score()
+                self.sb.check_high_score()
         if not self.aliens:
             # 删除现有的子弹并创建一群外星人
             self.bullets.empty()
             self._create_fleet()
             self.settings.increase_speed()
+
+            # 提高等级
+            self.stats.level += 1
+            self.sb.prep_level()
 
     def _create_fleet(self):
         # 创建一个外星人，并计算一行可以容纳多少个外星人
@@ -152,7 +161,7 @@ class AlienInvasion:
     def _ship_hit(self):
         if self.stats.ships_left > 0:
             self.stats.ships_left -= 1
-
+            self.sb.prep_ships()
             # 清空剩余子弹外星人和子弹
             self.aliens.empty()
             self.bullets.empty()
@@ -198,11 +207,14 @@ class AlienInvasion:
             # 重置游戏统计信息
             self.stats.reset_stats()
             self.stats.game_active = True
+            self.sb.prep_score()    # 重置分数
+            self.sb.prep_level()
+            self.sb.prep_ships()
             # 清空外星人和子弹
             self.aliens.empty()
             self.bullets.empty()
 
-            # 创建一群新的外星人并让飞船剧中
+            # 创建一群新的外星人并让飞船剧中·
             self._create_fleet()
             self.ship.center_ship()
 
